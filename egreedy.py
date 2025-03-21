@@ -9,24 +9,15 @@ class EpsilonGreedyNim():
         self.epsilon = 1.0
         self.k = 1
 
-    def getQVal(self, s, a):
-        return self.Q.get((tuple(s), a), 0)
-
-    def bestFutureRwd(self, s):
-        A = Nim.avail_acts(s)
-        if not A:
-            return 0
-        return max((self.getQVal(s, act) for act in A), default=0)
-
-    def chooseAct(self, s, useEpsilon=True):
+    def pi_s(self, s, useEpsilon=True):
         A = list(Nim.avail_acts(s))
         
         if useEpsilon and random.random() < self.epsilon:
             return random.choice(A)
         
-        return max(A, key=lambda act: self.getQVal(s, act), default=None)
+        return max(A, key=lambda act: self.Q.get((tuple(s), act), 0), default=None)
 
-    def updateRule(self, episode):
+    def MCPolicyEval(self, episode):
         S, A, R = zip(*episode)
         T = len(S) - 1
         G = 0
