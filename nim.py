@@ -28,5 +28,5 @@ class Nim():
         self.heaps[heap] -= cnt
         self.player = Nim.other_plyr(self.player)
 
-        if all(p == 0 for p in self.heaps):
+        if all(h == 0 for h in self.heaps):
             self.winner = self.player

@@ -1,4 +1,5 @@
 import random
+from functools import reduce
 from nim import Nim
 
 class GrundyNim():
@@ -11,34 +12,46 @@ class GrundyNim():
         self.initnimber()
     
     def nimsum(self, heaps):
-        return heaps[0] ^ heaps[1] ^ heaps[2] ^ (heaps[3] if len(heaps) > 3 else 0)
-    
+        return reduce(lambda x, y: x ^ y, heaps, 0)
+
     def initnimber(self):
-        maxheap = 20
-        
-        for i in range(1, maxheap+1):
-            for j in range(1, maxheap+1):
-                for k in range(1, maxheap+1):
-                    s = (i, j, k)
-                    nimSum = self.nimsum(s)
-                    
-                    if nimSum == 0:  
-                        for a in Nim.avail_acts(s):
-                            self.Q[(s, a)] = -0.5
+        maxheap = 8
+        num_heaps = 4
+        heap_sizes = [maxheap] * num_heaps
+
+        def generate_heaps(current_heaps, depth):
+            if depth == num_heaps:
+                s = tuple(current_heaps)
+                nimSum = self.nimsum(s)
+                if nimSum == 0:
+                    for a in Nim.avail_acts(s):
+                        heap, count = a
+                        newheaps = list(s)
+                        newheaps[heap] -= count
+                        newNimSum = self.nimsum(newheaps)
+                        if newNimSum == 0:
+                            self.Q[(s, a)] = 0.5
                             self.N[(s, a)] = 5
-                    else:  
-                        for a in Nim.avail_acts(s):
-                            heap, count = a
-                            newheaps = list(s)
-                            newheaps[heap] -= count
-                            newNimSum = self.nimsum(newheaps)
-                            
-                            if newNimSum == 0:  
-                                self.Q[(s, a)] = 0.8
-                                self.N[(s, a)] = 5
-                            else:  
-                                self.Q[(s, a)] = -0.2
-                                self.N[(s, a)] = 3
+                        else:
+                            self.Q[(s, a)] = -0.5
+                            self.N[(s, a)] = 3
+                else:
+                    for a in Nim.avail_acts(s):
+                        heap, count = a
+                        newheaps = list(s)
+                        newheaps[heap] -= count
+                        newNimSum = self.nimsum(newheaps)
+                        if newNimSum == 0:
+                            self.Q[(s, a)] = 0.8
+                            self.N[(s, a)] = 5
+                        else:
+                            self.Q[(s, a)] = -0.2
+                            self.N[(s, a)] = 3
+            else:
+                for i in range(1, heap_sizes[depth] + 1):
+                    generate_heaps(current_heaps + [i], depth + 1)
+
+        generate_heaps([], 0)
     
     def pi_s(self, s):
         A = list(Nim.avail_acts(s))

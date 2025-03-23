@@ -1,8 +1,8 @@
 import random
 import time
-import pickle
 from nim import Nim
 from egreedy import EpsilonGreedyNim
+from betteregreedy import GrundyNim
 
 def train(numeps, initialheaps=[1, 3, 5, 7], saveFile="nimAI.pkl"):
     agent = EpsilonGreedyNim()
@@ -12,24 +12,30 @@ def train(numeps, initialheaps=[1, 3, 5, 7], saveFile="nimAI.pkl"):
         game = Nim(initialheaps)
         ep = []
         
+        tracker = {
+                0: {"s": None, "a": None},
+                1: {"s": None, "a": None}
+        }
+        
         while True:
             currPlayer = game.player
             s = game.heaps.copy()
             a = agent.pi_s(s)
+
+            tracker[currPlayer]["s"] = s
+            tracker[currPlayer]["a"] = a
             
             game.move(a)
+            sn = game.heaps.copy()
             
             if game.winner is not None:
-                reward = -1 if currPlayer == game.other_plyr(game.winner) else 1
-                ep.append((s, a, reward))
+                ep.append((tracker[currPlayer]["s"], tracker[currPlayer]["a"], 1))
+                ep.append((s, a, -1))
                 break
-            else:
+            elif tracker[currPlayer]["s"] is not None:
                 ep.append((s, a, 0))
                 
         agent.MCPolicyEval(ep)
-    
-    with open(saveFile, "wb") as f:
-        pickle.dump(agent, f)
     
     return agent
 
@@ -52,7 +58,7 @@ def playNim(agent, humanPlayerIdx=None):
             while True:
                 try:
                     heap = int(input("Choose heap: "))
-                    count = int(input("Choose Count: "))
+                    count = int(input("Choose count: "))
                     if (heap, count) in availA:
                         break
                     print("Invalid move, try again.")
